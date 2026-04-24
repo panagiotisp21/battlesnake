@@ -81,6 +81,7 @@ function move(gameState) {
       isMoveSafe.up = false;
     }
   // TODO: Step 2 - Prevent your Battlesnake from colliding with itself
+  //for this i check where my snake is and if the snake is trying to move somewher where the body is i mark the move unsafe
   const myBody = gameState.you.body;
 
   for (let i = 0; i < myBody.length; i++) {
@@ -95,7 +96,7 @@ function move(gameState) {
       isMoveSafe.right = false;
     }
   // TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
-  //for this i check where are the others snakes and if they are next to me i mark the move as unsafe
+  //for this i check where are the others snakes and if they are next to me i mark the move unsafe
   const opponents = gameState.board.snakes;
   for (let i = 0; i < opponents.length; i++) {
     const opponent = opponents[i];
