@@ -40,6 +40,26 @@ function end(gameState) {
 // move is called on every turn and returns your next move
 // Valid moves are "up", "down", "left", or "right"
 // See https://docs.battlesnake.com/api/example-move for available data
+
+//
+const getClosestFood = (head, food) => {
+  let closestFood = null;
+  let minDistance = Infinity;
+
+  for (let i = 0; i < food.length; i++) {
+    const foodItem = food[i];
+    const distance =
+      Math.abs(head.x - foodItem.x) + Math.abs(head.y - foodItem.y);
+
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestFood = foodItem;
+    }
+  }
+
+  return closestFood;
+};
+
 function move(gameState) {
   let isMoveSafe = {
     up: true,
@@ -128,17 +148,30 @@ function move(gameState) {
       const nextMove = safeMoves[Math.floor(Math.random() * safeMoves.length)];
 
       // TODO: Step 4 - Move towards food instead of random, to regain health and survive longer
-      // food = gameState.board.food;
+
+      const food = gameState.board.food;
+      const closestFood = getClosestFood(myHead, food);
+
+      if (closestFood) {
+        if (closestFood.x > myHead.x && safeMoves.includes("right"))
+          nextMove = "right";
+        else if (closestFood.x < myHead.x && safeMoves.includes("left"))
+          nextMove = "left";
+        else if (closestFood.y > myHead.y && safeMoves.includes("up"))
+          nextMove = "up";
+        else if (closestFood.y < myHead.y && safeMoves.includes("down"))
+          nextMove = "down";
+      }
 
       console.log(`MOVE ${gameState.turn}: ${nextMove}`);
       return { move: nextMove };
     }
-
-    runServer({
-      info: info,
-      start: start,
-      move: move,
-      end: end,
-    });
   }
 }
+
+runServer({
+  info: info,
+  start: start,
+  move: move,
+  end: end,
+});
