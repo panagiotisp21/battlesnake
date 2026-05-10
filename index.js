@@ -42,6 +42,88 @@ const getClosestFood = (head, food) => {
   return closest;
 };
 
+/*
+*Other helper functions
+*getDirection and getTurns are to check the relative position of the snake's head to the direction it faces.
+*
+*/
+const getDirection = (head, neck) => {
+  if (neck.x < head.x) return 'right';
+  if (neck.x > head.x) return 'left';
+  if (neck.y < head.y) return 'up';
+  return 'down';
+};
+
+const getTurns = (direction) => {
+  switch (direction) {
+    case 'up':
+      return { ahead: 'up', left: 'left', right: 'right' };
+    case 'down':
+      return { ahead: 'down', left: 'right', right: 'left' };
+    case 'left':
+      return { ahead: 'left', left: 'down', right: 'up' };
+    case 'right':
+    default:
+      return { ahead: 'right', left: 'up', right: 'down' };
+  }
+};
+
+/*
+*getObstacleMap shows what squares are safe or unsafe in the three directions.
+*/ 
+const getObstacleMap = (board) => {
+  const grid = Array.from({ length: board.height }, () =>
+    Array.from({ length: board.width }, () => false)
+  );
+
+  for (const snake of board.snakes) {
+    for (const part of snake.body) {
+      if (
+        part.x >= 0 &&
+        part.x < board.width &&
+        part.y >= 0 &&
+        part.y < board.height
+      ) {
+        grid[part.y][part.x] = true;
+      }
+    }
+  }
+
+  return grid;
+};
+
+/*
+*getOpenSpace counts how many open squares are reachable from the given position.
+*/ 
+const getOpenSpace = (start, board, obstacleMap) => {
+  const width = board.width;
+  const height = board.height;
+  const visited = new Set();
+  const queue = [start];
+  let count = 0;
+
+  const key = (x, y) => `${x},${y}`;
+
+  while (queue.length > 0) {
+    const { x, y } = queue.shift();
+
+    if (x < 0 || x >= width || y < 0 || y >= height) continue;
+    const hash = key(x, y);
+    if (visited.has(hash)) continue;
+    if (obstacleMap[y][x]) continue;
+
+    visited.add(hash);
+    count += 1;
+
+    queue.push({ x: x + 1, y });
+    queue.push({ x: x - 1, y });
+    queue.push({ x, y: y + 1 });
+    queue.push({ x, y: y - 1 });
+  }
+
+  return count;
+};
+
 /* MAIN MOVE LOGIC */
 function move(gameState) {
   // 1. all moves allowed
@@ -120,29 +202,32 @@ function move(gameState) {
     return { move: 'down' };
   }
 
+  const direction = getDirection(myHead, myNeck);
+  const turns = getTurns(direction);
+
+  const moveTargets = {
+    up: { x: myHead.x, y: myHead.y + 1 },
+    down: { x: myHead.x, y: myHead.y - 1 },
+    left: { x: myHead.x - 1, y: myHead.y },
+    right: { x: myHead.x + 1, y: myHead.y },
+  };
+
+  const obstacleMap = getObstacleMap(board);
+  const areaByMove = {};
+
+  for (const moveDirection of safeMoves) {
+    const target = moveTargets[moveDirection];
+    areaByMove[moveDirection] = getOpenSpace(target, board, obstacleMap);
+  }
+
+  const bestMove = safeMoves.sort(
+    (a, b) => areaByMove[b] - areaByMove[a]
+  )[0];
+
   // 6. FOOD LOGIC
   const food = board.food;
   const closestFood = getClosestFood(myHead, food);
 
-  // random safe move
-  let nextMove = safeMoves[Math.floor(Math.random() * safeMoves.length)];
-
-  // 7. Try to move toward food IF safe
-  if (closestFood) {
-    if (closestFood.x > myHead.x && safeMoves.includes('right'))
-      nextMove = 'right';
-    else if (closestFood.x < myHead.x && safeMoves.includes('left'))
-      nextMove = 'left';
-    else if (closestFood.y > myHead.y && safeMoves.includes('up'))
-      nextMove = 'up';
-    else if (closestFood.y < myHead.y && safeMoves.includes('down'))
-      nextMove = 'down';
-  }
-
-  console.log(`MOVE ${gameState.turn}: ${nextMove}`);
-
-  return { move: nextMove };
-}
 
 /* START SERVER */
 runServer({
@@ -151,3 +236,4 @@ runServer({
   move,
   end,
 });
+}
