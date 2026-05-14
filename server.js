@@ -1,36 +1,33 @@
-import express from "express";
+import express from 'express';
 
-export default function runServer(handlers) {
+export const createApp = (handlers) => {
   const app = express();
   app.use(express.json());
 
-  app.get("/", (req, res) => {
-    res.send(handlers.info());
-  });
+  app.get('/', (req, res) => res.send(handlers.info()));
 
-  app.post("/start", (req, res) => {
+  app.post('/start', (req, res) => {
     handlers.start(req.body);
-    res.send("ok");
+    res.send('ok');
   });
 
-  app.post("/move", (req, res) => {
-    res.send(handlers.move(req.body));
+  app.post('/move', (req, res) => {
+    const moveResponse = handlers.move(req.body);
+    res.send(moveResponse);
   });
 
-  app.post("/end", (req, res) => {
+  app.post('/end', (req, res) => {
     handlers.end(req.body);
-    res.send("ok");
+    res.send('ok');
   });
 
-  app.use(function (req, res, next) {
-    res.set("Server", "battlesnake/github/starter-snake-javascript");
-    next();
-  });
+  return app;
+};
 
-  const host = "0.0.0.0";
-  const port = process.env.PORT || 8000;
-
-  app.listen(port, host, () => {
-    console.log(`Running Battlesnake at http://${host}:${port}...`);
+export default function runServer(handlers) {
+  const app = createApp(handlers);
+  const port = process.env.PORT || 8080;
+  app.listen(port, () => {
+    console.log(`Starting Battlesnake at http://0.0.0.0:${port}...`);
   });
 }

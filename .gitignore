@@ -1,3 +1,12 @@
+# Dependencies
+node_modules/
+
+# Test coverage
+coverage/
+
+# Environment variables
+.env
+
+# OS-specific files
 .DS_Store
-node_modules
- 
+Thumbs.db
